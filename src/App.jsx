@@ -267,20 +267,17 @@ const Dashboard = () => {
   const [sensorSet, setSensorSet] = useState({ ph: true, tds: true, suhuAir: true, suhuUdara: true, kelembaban: true });
   const [statusDB, setStatusDB] = useState('OFFLINE');
   
-  // Menggunakan useRef untuk melacak kapan terakhir kali data masuk dari ESP32
   const lastUpdateRef = useRef(Date.now());
 
   useEffect(() => {
-    // 1. Mendengarkan data sensor realtime
     const unsubscribeRealtime = onValue(ref(db, 'aquaponik/realtime'), (snapshot) => {
       if (snapshot.val()) { 
         setSensorData(snapshot.val()); 
-        lastUpdateRef.current = Date.now(); // Perbarui waktu saat ada data masuk
+        lastUpdateRef.current = Date.now(); 
         setStatusDB('ONLINE'); 
       }
     });
 
-    // 2. Interval Watchdog: Cek setiap 3 detik apakah sudah > 15 detik tidak ada data masuk
     const interval = setInterval(() => {
       if (Date.now() - lastUpdateRef.current > 15000) {
         setStatusDB('OFFLINE');
@@ -315,7 +312,6 @@ const Dashboard = () => {
       else setSensorSet(defaultSensor);
     });
 
-    // Cleanup interval saat komponen ditutup
     return () => clearInterval(interval);
   }, []);
 
@@ -345,12 +341,13 @@ const Dashboard = () => {
         <Wifi className={`w-4 h-4 ${statusDB === 'ONLINE' ? 'text-green-500' : 'text-red-500'}`} />
       </div>
 
+      {/* Jika status OFFLINE, nilai otomatis kembali ke 0 / 0.0 agar tidak menampilkan data sisa */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
-        {sensorSet.ph && <SensorCard title="pH Air" value={sensorData.ph || "0.0"} unit="" icon={Activity} color="bg-blue-400" />}
-        {sensorSet.tds && <SensorCard title="TDS" value={sensorData.tds || "0"} unit="ppm" icon={Droplet} color="bg-blue-500" />}
-        {sensorSet.suhuAir && <SensorCard title="Suhu Air" value={sensorData.suhuAir || "0.0"} unit="°C" icon={Thermometer} color="bg-red-400" />}
-        {sensorSet.suhuUdara && <SensorCard title="Suhu Udara" value={sensorData.suhuUdara || "0.0"} unit="°C" icon={Thermometer} color="bg-red-500" />}
-        {sensorSet.kelembaban && <SensorCard title="Kelembaban" value={sensorData.kelembaban || "0"} unit="%" icon={Droplet} color="bg-blue-300" />}
+        {sensorSet.ph && <SensorCard title="pH Air" value={statusDB === 'ONLINE' ? (sensorData.ph || "0.0") : "0.0"} unit="" icon={Activity} color="bg-blue-400" />}
+        {sensorSet.tds && <SensorCard title="TDS" value={statusDB === 'ONLINE' ? (sensorData.tds || "0") : "0"} unit="ppm" icon={Droplet} color="bg-blue-500" />}
+        {sensorSet.suhuAir && <SensorCard title="Suhu Air" value={statusDB === 'ONLINE' ? (sensorData.suhuAir || "0.0") : "0.0"} unit="°C" icon={Thermometer} color="bg-red-400" />}
+        {sensorSet.suhuUdara && <SensorCard title="Suhu Udara" value={statusDB === 'ONLINE' ? (sensorData.suhuUdara || "0.0") : "0.0"} unit="°C" icon={Thermometer} color="bg-red-500" />}
+        {sensorSet.kelembaban && <SensorCard title="Kelembaban" value={statusDB === 'ONLINE' ? (sensorData.kelembaban || "0") : "0"} unit="%" icon={Droplet} color="bg-blue-300" />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
