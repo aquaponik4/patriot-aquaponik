@@ -273,7 +273,6 @@ const Dashboard = () => {
   const lastUpdateRef = useRef(Date.now());
 
   useEffect(() => {
-    // Timer untuk Jam, Tanggal & Hari Real-time di pojok kanan atas
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
     const unsubscribeRealtime = onValue(ref(db, 'aquaponik/realtime'), (snapshot) => {
@@ -334,24 +333,28 @@ const Dashboard = () => {
     set(ref(db, `aquaponik/kontrol/${device}`), !kontrolData[device]);
   };
 
-  const SensorGaugeCard = ({ title, value, unit, color }) => (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border dark:border-gray-700 shadow-sm flex flex-col items-center justify-center relative transition-colors">
-      <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm mb-2">{title}</h3>
-      <div className={`w-24 h-24 rounded-full border-8 border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center relative ${color}`}>
-        <span className="text-2xl font-bold text-gray-800 dark:text-white">{value}</span>
-        <span className="text-xs text-gray-400">{unit}</span>
+  // Desain Kartu Sensor Kotak Sesuai Awal
+  const SensorCard = ({ title, value, unit, icon: Icon, color }) => (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border dark:border-gray-700 shadow-sm flex flex-col items-center justify-center relative overflow-hidden transition-colors">
+      <div className={`absolute top-0 left-0 w-full h-1 ${color}`}></div>
+      <div className="flex items-center gap-2 mb-2 w-full justify-center">
+        <Icon className="text-gray-500 dark:text-gray-400 w-5 h-5" />
+        <h3 className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base">{title}</h3>
+      </div>
+      <div className="flex items-baseline gap-1">
+        <span className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">{value}</span>
+        <span className="text-gray-500 dark:text-gray-400 font-medium">{unit}</span>
       </div>
     </div>
   );
 
-  // Format hari, tanggal, waktu
   const formattedDateString = currentTime.toLocaleDateString('id-ID', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
   const formattedTimeString = currentTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
       
-      {/* HEADER BANNER SEPERTI REFERENSI */}
+      {/* HEADER BANNER DENGAN TANGGAL & WAKTU */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors">
         <div className="flex items-center gap-3">
           <div className="bg-blue-500 p-2 rounded-xl text-white">
@@ -372,26 +375,23 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* GRID GAUGE SENSOR ATAS */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {sensorSet.suhuUdara && <SensorGaugeCard title="Suhu Udara" value={statusDB === 'ONLINE' ? (sensorData.suhuUdara || "0.0") : "0.0"} unit="°C" color="border-t-orange-400" />}
-        {sensorSet.kelembaban && <SensorGaugeCard title="Kelembaban" value={statusDB === 'ONLINE' ? (sensorData.kelembaban || "0") : "0"} unit="%" color="border-t-blue-400" />}
-        {sensorSet.ph && <SensorGaugeCard title="pH Air" value={statusDB === 'ONLINE' ? (sensorData.ph || "0.0") : "0.0"} unit="Status" color="border-t-green-400" />}
-        {sensorSet.suhuAir && <SensorGaugeCard title="Suhu Air" value={statusDB === 'ONLINE' ? (sensorData.suhuAir || "0.0") : "0.0"} unit="°C" color="border-t-red-400" />}
-        {sensorSet.tds && <SensorGaugeCard title="Tds" value={statusDB === 'ONLINE' ? (sensorData.tds || "0") : "0"} unit="ppm" color="border-t-amber-500" />}
+      {/* KARTU NILAI SENSOR KEMBALI KE DESAIN AWAL */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+        {sensorSet.ph && <SensorCard title="pH Air" value={statusDB === 'ONLINE' ? (sensorData.ph || "0.0") : "0.0"} unit="" icon={Activity} color="bg-blue-400" />}
+        {sensorSet.tds && <SensorCard title="TDS" value={statusDB === 'ONLINE' ? (sensorData.tds || "0") : "0"} unit="ppm" icon={Droplet} color="bg-blue-500" />}
+        {sensorSet.suhuAir && <SensorCard title="Suhu Air" value={statusDB === 'ONLINE' ? (sensorData.suhuAir || "0.0") : "0.0"} unit="°C" icon={Thermometer} color="bg-red-400" />}
+        {sensorSet.suhuUdara && <SensorCard title="Suhu Udara" value={statusDB === 'ONLINE' ? (sensorData.suhuUdara || "0.0") : "0.0"} unit="°C" icon={Thermometer} color="bg-red-500" />}
+        {sensorSet.kelembaban && <SensorCard title="Kelembaban" value={statusDB === 'ONLINE' ? (sensorData.kelembaban || "0") : "0"} unit="%" icon={Droplet} color="bg-blue-300" />}
       </div>
 
-      {/* BAGIAN TENGAH: GRAFIK & KONTROL MANUAL */}
+      {/* GRAFIK & KONTROL MANUAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* GRAFIK TELEMETRI */}
+        {/* GRAFIK HISTORI KEMBALI KE DESAIN AWAL */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 lg:col-span-2 transition-colors">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-              <Activity className="w-5 h-5 text-indigo-500" /> Monitoring Kondisi Lingkungan Aquaponik
-            </h2>
-            <span className="text-xs bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full text-gray-500 dark:text-gray-300 font-medium">Real-Time Data</span>
-          </div>
+          <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-indigo-500" /> GRAFIK HISTORI
+          </h2>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={historyData.length > 0 ? historyData : [{time: '00:00', ph: 0, tds: 0, suhuAir: 0}]}>
@@ -401,43 +401,40 @@ const Dashboard = () => {
                 <YAxis yAxisId="right" orientation="right" stroke="#9ca3af" />
                 <Tooltip contentStyle={{ backgroundColor: '#1f2937', color: '#fff', border: 'none' }} />
                 <Legend />
-                <Line yAxisId="left" type="monotone" dataKey="ph" stroke="#10b981" strokeWidth={2} name="pH" />
-                <Line yAxisId="right" type="monotone" dataKey="suhuUdara" stroke="#f97316" strokeWidth={2} name="Suhu" />
-                <Line yAxisId="right" type="monotone" dataKey="kelembaban" stroke="#3b82f6" strokeWidth={2} name="Kelembaban" />
+                <Line yAxisId="left" type="monotone" dataKey="ph" stroke="#10b981" strokeWidth={2} name="pH Air" />
+                <Line yAxisId="right" type="monotone" dataKey="tds" stroke="#3b82f6" strokeWidth={2} name="TDS (ppm)" />
+                <Line yAxisId="left" type="monotone" dataKey="suhuAir" stroke="#f97316" strokeWidth={2} name="Suhu Air" />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* KONTROL MANUAL (2 KOLOM SEPERTI GAMBAR) */}
+        {/* KONTROL MANUAL */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 transition-colors">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-base font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
-              <Power className="w-5 h-5 text-red-500" /> Kontrol Manual
-            </h2>
-            <span className="text-xs bg-green-100 text-green-600 font-bold px-2 py-0.5 rounded">Live</span>
-          </div>
-          <div className="grid grid-cols-2 gap-3 h-64 overflow-y-auto pr-1">
+          <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
+            <Power className="w-5 h-5 text-red-500" /> KONTROL MANUAL
+          </h2>
+          <div className="space-y-3 h-64 overflow-y-auto pr-2">
             {Object.keys(kontrolData)
               .filter((device) => device !== 'pompa')
               .map((device) => {
                 const labelMap = {
-                  pompaAir: "Pompa Air", 
-                  pompaNA: "Nutrisi A", 
-                  pompaNB: "Nutrisi B",
-                  pompaPHU: "pH Up", 
-                  pompaPHD: "pH Down", 
-                  pakanIkan: "Pakan"
+                  pompaAir: "POMPA AIR", 
+                  pompaNA: "POMPA NUTRISI A", 
+                  pompaNB: "POMPA NUTRISI B",
+                  pompaPHU: "POMPA PH UP", 
+                  pompaPHD: "POMPA PH DOWN", 
+                  pakanIkan: "PAKAN IKAN (PKN)"
                 };
                 const label = labelMap[device] || device;
 
                 return (
-                  <div key={device} className="flex flex-col justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-xl border dark:border-gray-600">
-                    <span className="font-medium text-xs text-gray-700 dark:text-gray-200 mb-2">{label}</span>
+                  <div key={device} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600 transition-colors">
+                    <span className="font-medium text-sm text-gray-700 dark:text-gray-200">{label}</span>
                     <button 
                       onClick={() => toggleDevice(device)}
-                      className={`w-11 h-6 rounded-full transition-colors flex items-center shadow-inner focus:outline-none ${kontrolData[device] ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}>
-                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${kontrolData[device] ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                      className={`w-12 h-6 rounded-full transition-colors flex items-center shadow-inner focus:outline-none ${kontrolData[device] ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${kontrolData[device] ? 'translate-x-6' : 'translate-x-1'}`}></div>
                     </button>
                   </div>
                 );
@@ -447,10 +444,10 @@ const Dashboard = () => {
 
       </div>
 
-      {/* BAGIAN BAWAH: LOG DATA TIAP SENSOR & TABEL JADWAL */}
+      {/* LOG DATA TIAP SENSOR & TABEL JADWAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* TABEL LOG DATA PER SENSOR (DENGAN TAB PILIHAN) */}
+        {/* TABEL LOG DATA PER SENSOR */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 lg:col-span-2 transition-colors">
           <div className="flex flex-wrap gap-2 mb-4 border-b pb-3 dark:border-gray-700">
             {['suhuUdara', 'kelembaban', 'ph', 'suhuAir', 'tds'].map((tab) => (
