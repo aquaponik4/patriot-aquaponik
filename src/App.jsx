@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom';
 import { ref, onValue, set } from 'firebase/database';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -130,7 +130,6 @@ const SettingsPage = ({ user }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PANEL 1: Waktu & Tanggal (RTC) */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
           <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-indigo-500" /> Setting Waktu & Tanggal (RTC)
@@ -152,7 +151,6 @@ const SettingsPage = ({ user }) => {
           </button>
         </div>
 
-        {/* PANEL 2: Pengaturan Wi-Fi */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
           <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Wifi className="w-5 h-5 text-blue-500" /> Setting Wi-Fi (ESP32)
@@ -174,7 +172,6 @@ const SettingsPage = ({ user }) => {
           </div>
         </div>
 
-        {/* PANEL 3: Penjadwalan Aktuator (Pakan & Nutrisi) */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
           <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Clock className="w-5 h-5 text-yellow-500" /> Setting Jadwal Pakan & Nutrisi
@@ -206,7 +203,6 @@ const SettingsPage = ({ user }) => {
           </button>
         </div>
 
-        {/* PANEL 4: Kontrol Fungsi Sensor */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700">
           <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Sliders className="w-5 h-5 text-green-500" /> Kontrol Fungsi Sensor
@@ -227,7 +223,6 @@ const SettingsPage = ({ user }) => {
           </div>
         </div>
 
-        {/* PANEL 5: Konfigurasi Telemetri (MQTT) */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border dark:border-gray-700 lg:col-span-2">
           <h3 className="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
             <Server className="w-5 h-5 text-purple-500" /> Setting Telemetri & MQTT
@@ -270,13 +265,27 @@ const Dashboard = () => {
   const [historyData, setHistoryData] = useState([]);
   const [kontrolData, setKontrolData] = useState({});
   const [sensorSet, setSensorSet] = useState({ ph: true, tds: true, suhuAir: true, suhuUdara: true, kelembaban: true });
-  const [statusDB, setStatusDB] = useState('Menghubungkan...');
+  const [statusDB, setStatusDB] = useState('OFFLINE');
+  
+  // Menggunakan useRef untuk melacak kapan terakhir kali data masuk dari ESP32
+  const lastUpdateRef = useRef(Date.now());
 
   useEffect(() => {
-    onValue(ref(db, 'aquaponik/realtime'), (snapshot) => {
-      if (snapshot.val()) { setSensorData(snapshot.val()); setStatusDB('ONLINE'); }
-      else setStatusDB('MENUNGGU DATA');
+    // 1. Mendengarkan data sensor realtime
+    const unsubscribeRealtime = onValue(ref(db, 'aquaponik/realtime'), (snapshot) => {
+      if (snapshot.val()) { 
+        setSensorData(snapshot.val()); 
+        lastUpdateRef.current = Date.now(); // Perbarui waktu saat ada data masuk
+        setStatusDB('ONLINE'); 
+      }
     });
+
+    // 2. Interval Watchdog: Cek setiap 3 detik apakah sudah > 15 detik tidak ada data masuk
+    const interval = setInterval(() => {
+      if (Date.now() - lastUpdateRef.current > 15000) {
+        setStatusDB('OFFLINE');
+      }
+    }, 3000);
 
     onValue(ref(db, 'aquaponik/history'), (snapshot) => {
       if (snapshot.val()) {
@@ -288,7 +297,6 @@ const Dashboard = () => {
     });
 
     onValue(ref(db, 'aquaponik/kontrol'), (snapshot) => {
-      // HANYA MENYISAKAN KONTROL SPESIFIK SESUAI LCD FISIK
       const defaultKontrol = { 
         pompaAir: false, 
         pompaNA: false, 
@@ -306,6 +314,9 @@ const Dashboard = () => {
       if (snapshot.val()) setSensorSet({ ...defaultSensor, ...snapshot.val() });
       else setSensorSet(defaultSensor);
     });
+
+    // Cleanup interval saat komponen ditutup
+    return () => clearInterval(interval);
   }, []);
 
   const toggleDevice = (device) => {
@@ -330,11 +341,10 @@ const Dashboard = () => {
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <div className="flex justify-end items-center gap-2 mb-6 bg-white dark:bg-gray-800 p-2 px-4 rounded-lg border dark:border-gray-700 shadow-sm w-max ml-auto">
         <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Status IoT:</span>
-        <span className={`font-bold ${statusDB === 'ONLINE' ? 'text-green-500' : 'text-yellow-500'}`}>{statusDB}</span>
-        <Wifi className={`w-4 h-4 ${statusDB === 'ONLINE' ? 'text-green-500' : 'text-yellow-500'}`} />
+        <span className={`font-bold ${statusDB === 'ONLINE' ? 'text-green-500' : 'text-red-500'}`}>{statusDB}</span>
+        <Wifi className={`w-4 h-4 ${statusDB === 'ONLINE' ? 'text-green-500' : 'text-red-500'}`} />
       </div>
 
-      {/* GRID SENSOR: Kekeruhan, Debit Air, dan Level Air Telah Dihapus */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-6">
         {sensorSet.ph && <SensorCard title="pH Air" value={sensorData.ph || "0.0"} unit="" icon={Activity} color="bg-blue-400" />}
         {sensorSet.tds && <SensorCard title="TDS" value={sensorData.tds || "0"} unit="ppm" icon={Droplet} color="bg-blue-500" />}
@@ -370,27 +380,29 @@ const Dashboard = () => {
             <Power className="w-5 h-5 text-red-500" /> KONTROL MANUAL
           </h2>
           <div className="space-y-3 h-64 overflow-y-auto pr-2">
-            {Object.keys(kontrolData).map((device) => {
-              const labelMap = {
-                pompaAir: "POMPA AIR", 
-                pompaNA: "POMPA NUTRISI A", 
-                pompaNB: "POMPA NUTRISI B",
-                pompaPHU: "POMPA PH UP", 
-                pompaPHD: "POMPA PH DOWN", 
-                pakanIkan: "PAKAN IKAN (PKN)"
-              };
-              const label = labelMap[device] || device;
+            {Object.keys(kontrolData)
+              .filter((device) => device !== 'pompa')
+              .map((device) => {
+                const labelMap = {
+                  pompaAir: "POMPA AIR", 
+                  pompaNA: "POMPA NUTRISI A", 
+                  pompaNB: "POMPA NUTRISI B",
+                  pompaPHU: "POMPA PH UP", 
+                  pompaPHD: "POMPA PH DOWN", 
+                  pakanIkan: "PAKAN IKAN (PKN)"
+                };
+                const label = labelMap[device] || device;
 
-              return (
-                <div key={device} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600 transition-colors">
-                  <span className="font-medium text-sm text-gray-700 dark:text-gray-200">{label}</span>
-                  <button 
-                    onClick={() => toggleDevice(device)}
-                    className={`w-12 h-6 rounded-full transition-colors flex items-center shadow-inner focus:outline-none ${kontrolData[device] ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${kontrolData[device] ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                  </button>
-                </div>
-              );
+                return (
+                  <div key={device} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border dark:border-gray-600 transition-colors">
+                    <span className="font-medium text-sm text-gray-700 dark:text-gray-200">{label}</span>
+                    <button 
+                      onClick={() => toggleDevice(device)}
+                      className={`w-12 h-6 rounded-full transition-colors flex items-center shadow-inner focus:outline-none ${kontrolData[device] ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                      <div className={`w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${kontrolData[device] ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                    </button>
+                  </div>
+                );
             })}
           </div>
         </div>
