@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Memaksa Tailwind v4 menggunakan class .dark dari tombol, bukan dari OS */
+@variant dark (&:is(.dark *));
+
+body {
+  background-color: #f3f4f6;
+}
