@@ -15,9 +15,9 @@ const Navbar = ({ user, darkMode, setDarkMode }) => {
     <nav className="bg-[#0f2847] text-white p-4 flex flex-wrap justify-between items-center shadow-lg transition-colors duration-300 dark:bg-gray-900">
       <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start mb-4 md:mb-0">
         <div className="flex items-center gap-2">
-          <Activity className="text-blue-400 w-8 h-8" />
-          <h1 className="text-2xl font-bold tracking-wide">PATRIOT</h1>
-        </div>
+	  <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+	  <h1 className="text-2xl font-bold tracking-wide">PATRIOT</h1>
+	</div>
         <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-[#163a66] rounded-full md:hidden dark:bg-gray-800 focus:outline-none">
           {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-200" />}
         </button>
