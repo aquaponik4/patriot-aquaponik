@@ -16,7 +16,7 @@ const Navbar = ({ user, darkMode, setDarkMode }) => {
       <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start mb-4 md:mb-0">
         <div className="flex items-center gap-2">
 	  <img src="/icon.png" alt="Logo" className="w-8 h-8 object-contain" />
-	  <h1 className="text-2xl font-bold tracking-wide">PATRIOT</h1>
+	  <h1 className="text-2xl font-bold tracking-wide">PATRIOT (Pemantau Aquaponik Terapadu Berbasis IoT)</h1>
 	</div>
         <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-[#163a66] rounded-full md:hidden dark:bg-gray-800 focus:outline-none">
           {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-200" />}
