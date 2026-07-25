@@ -16,7 +16,7 @@ const Navbar = ({ user, darkMode, setDarkMode }) => {
       <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start mb-4 md:mb-0">
         <div className="flex items-center gap-2">
 	  <img src="/icon.png" alt="Logo" className="w-8 h-8 object-contain" />
-	  <h1 className="text-2xl font-bold tracking-wide">PATRIOT (Pemantau Aquaponik Terapadu Berbasis IoT)</h1>
+	  <h1 className="text-2xl font-bold tracking-wide">PATRIOT (Pemantau Aquaponik Terpadu Berbasis IoT)</h1>
 	</div>
         <button onClick={() => setDarkMode(!darkMode)} className="p-2 bg-[#163a66] rounded-full md:hidden dark:bg-gray-800 focus:outline-none">
           {darkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-200" />}
@@ -390,7 +390,7 @@ const Dashboard = () => {
         {/* GRAFIK HISTORI KEMBALI KE DESAIN AWAL */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border dark:border-gray-700 lg:col-span-2 transition-colors">
           <h2 className="text-lg font-bold text-gray-700 dark:text-gray-200 mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-indigo-500" /> GRAFIK HISTORI
+            <Activity className="w-5 h-5 text-indigo-500" /> GRAFIK MONITORING SENSOR
           </h2>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
